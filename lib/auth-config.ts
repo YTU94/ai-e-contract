@@ -1,7 +1,3 @@
-// NextAuth.js 配置文件示例
-// 在实际项目中，这应该是 pages/api/auth/[...nextauth].ts (Pages Router)
-// 或 app/api/auth/[...nextauth]/route.ts (App Router)
-
 import type { NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { PrismaAdapter } from "@next-auth/prisma-adapter"
@@ -13,6 +9,7 @@ const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
+  secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: "/auth/login",
     signUp: "/auth/register",
@@ -29,29 +26,34 @@ const authOptions: NextAuthOptions = {
           return null
         }
 
-        // 查找用户
-        const user = await prisma.user.findUnique({
-          where: {
-            email: credentials.email,
-          },
-        })
+        try {
+          // 查找用户
+          const user = await prisma.user.findUnique({
+            where: {
+              email: credentials.email,
+            },
+          })
 
-        if (!user) {
+          if (!user) {
+            return null
+          }
+
+          // 验证密码
+          const isPasswordValid = await compare(credentials.password, user.password)
+
+          if (!isPasswordValid) {
+            return null
+          }
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            company: user.company,
+          }
+        } catch (error) {
+          console.error("Auth error:", error)
           return null
-        }
-
-        // 验证密码
-        const isPasswordValid = await compare(credentials.password, user.password)
-
-        if (!isPasswordValid) {
-          return null
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          company: user.company,
         }
       },
     }),
@@ -81,12 +83,4 @@ const authOptions: NextAuthOptions = {
   },
 }
 
-// 模拟 Prisma 实例
-// const prisma = {
-//   user: {
-//     findUnique: async ({ where }: any) => {
-//       // 模拟数据库查询
-//       return null
-//     }
-//   }
-// }
+export { authOptions }
