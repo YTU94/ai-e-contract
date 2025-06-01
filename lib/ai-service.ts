@@ -1,33 +1,64 @@
 // AI service configuration for contract analysis and generation
 import { openai } from "@ai-sdk/openai"
 import { generateText, streamText } from "ai"
-import { envConfig } from "./env"
 
-// Initialize OpenAI client only if API key is available
-const aiModel = envConfig.OPENAI_API_KEY ? openai("gpt-4o") : null
+// Initialize OpenAI client
+const aiModel = openai("gpt-4o")
 
 export class AIContractService {
   static async analyzeContract(contractContent: string) {
-    if (!aiModel) {
-      throw new Error("AI service not configured. Please add OPENAI_API_KEY to environment variables.")
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error("OpenAI API key not configured")
     }
 
     try {
       const { text } = await generateText({
         model: aiModel,
-        prompt: `分析以下合同内容，识别关键条款、潜在风险点和重要信息：
+        prompt: `作为专业的法律AI助手，请分析以下合同内容，并提供详细的分析报告：
 
 合同内容：
 ${contractContent}
 
-请提供：
-1. 合同类型识别
-2. 关键条款摘要
-3. 潜在风险点
-4. 重要日期和金额
-5. 建议和注意事项
+请按以下格式提供分析：
 
-请用中文回复，格式清晰。`,
+## 📋 合同基本信息
+- 合同类型：
+- 合同主题：
+- 涉及方数量：
+
+## 🔍 关键条款分析
+1. **核心条款**：
+2. **权利义务**：
+3. **付款条款**：
+4. **时间安排**：
+
+## ⚠️ 风险点识别
+1. **高风险条款**：
+2. **模糊表述**：
+3. **缺失条款**：
+
+## 💰 财务条款
+- 合同金额：
+- 付款方式：
+- 违约金条款：
+
+## 📅 重要日期
+- 合同期限：
+- 关键节点：
+
+## 💡 建议和改进
+1. **条款优化建议**：
+2. **风险防范措施**：
+3. **合规性建议**：
+
+## 📊 合同评分
+- 完整性：/10
+- 清晰度：/10
+- 风险控制：/10
+- 总体评分：/10
+
+请用中文回复，确保分析专业、准确、实用。`,
+        maxTokens: 2000,
       })
 
       return {
@@ -38,34 +69,92 @@ ${contractContent}
       console.error("AI analysis error:", error)
       return {
         success: false,
-        error: "AI分析失败，请稍后重试",
+        error: this.getErrorMessage(error),
       }
     }
   }
 
   static async generateContract(contractType: string, requirements: string) {
-    if (!aiModel) {
-      throw new Error("AI service not configured. Please add OPENAI_API_KEY to environment variables.")
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error("OpenAI API key not configured")
     }
 
     try {
       const { text } = await generateText({
         model: aiModel,
-        prompt: `根据以下要求生成一份${contractType}合同模板：
+        prompt: `作为专业的法律AI助手，请根据以下要求生成一份完整的${contractType}：
 
-要求：
+需求描述：
 ${requirements}
 
-请生成一份完整的合同模板，包括：
-1. 合同标题
-2. 甲乙双方信息
-3. 合同条款
-4. 权利义务
-5. 违约责任
-6. 争议解决
-7. 其他必要条款
+请生成一份专业、完整的合同，包含以下结构：
 
-请确保合同内容专业、完整且符合法律规范。`,
+# ${contractType}
+
+## 合同编号
+[合同编号：待填写]
+
+## 甲方（委托方/买方）
+- 公司名称：[甲方公司名称]
+- 法定代表人：[法定代表人姓名]
+- 地址：[详细地址]
+- 联系电话：[联系电话]
+- 邮箱：[邮箱地址]
+
+## 乙方（服务方/卖方）
+- 公司名称：[乙方公司名称]
+- 法定代表人：[法定代表人姓名]
+- 地址：[详细地址]
+- 联系电话：[联系电话]
+- 邮箱：[邮箱地址]
+
+## 第一条 合同目的和依据
+[合同签署的目的和法律依据]
+
+## 第二条 服务内容/商品描述
+[详细的服务内容或商品描述]
+
+## 第三条 合同金额和付款方式
+[具体金额和付款安排]
+
+## 第四条 履行期限和地点
+[时间安排和履行地点]
+
+## 第五条 双方权利和义务
+### 甲方权利和义务：
+### 乙方权利和义务：
+
+## 第六条 质量标准和验收
+[质量要求和验收标准]
+
+## 第七条 违约责任
+[违约情形和责任承担]
+
+## 第八条 知识产权
+[知识产权归属和保护]
+
+## 第九条 保密条款
+[保密义务和范围]
+
+## 第十条 争议解决
+[争议解决方式]
+
+## 第十一条 合同变更和解除
+[变更和解除条件]
+
+## 第十二条 其他约定
+[其他特殊约定]
+
+## 第十三条 合同生效
+本合同自双方签字盖章之日起生效，有效期至[结束日期]。
+
+## 签署
+甲方（盖章）：________________    乙方（盖章）：________________
+法定代表人：__________________    法定代表人：__________________
+签署日期：____________________    签署日期：____________________
+
+请确保合同内容专业、完整、符合法律规范，并根据具体需求进行个性化调整。`,
+        maxTokens: 3000,
       })
 
       return {
@@ -76,14 +165,14 @@ ${requirements}
       console.error("Contract generation error:", error)
       return {
         success: false,
-        error: "合同生成失败，请稍后重试",
+        error: this.getErrorMessage(error),
       }
     }
   }
 
   static async streamContractGeneration(contractType: string, requirements: string) {
-    if (!aiModel) {
-      throw new Error("AI service not configured. Please add OPENAI_API_KEY to environment variables.")
+    if (!process.env.OPENAI_API_KEY) {
+      throw new Error("OpenAI API key not configured")
     }
 
     return streamText({
@@ -94,6 +183,23 @@ ${requirements}
 ${requirements}
 
 请生成一份完整的合同模板，逐步输出内容。`,
+      maxTokens: 3000,
     })
+  }
+
+  private static getErrorMessage(error: any): string {
+    if (error instanceof Error) {
+      if (error.message.includes("API key")) {
+        return "OpenAI API 密钥无效或已过期"
+      }
+      if (error.message.includes("quota")) {
+        return "OpenAI API 配额已用完，请检查账户余额"
+      }
+      if (error.message.includes("rate limit")) {
+        return "请求频率过高，请稍后重试"
+      }
+      return error.message
+    }
+    return "AI 服务暂时不可用，请稍后重试"
   }
 }

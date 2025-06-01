@@ -1,6 +1,7 @@
 import { DatabaseStatus } from "@/components/database-status"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { FileText, Database, Key, Zap } from "lucide-react"
+import { AIStatusChecker } from "@/components/ai-status-checker"
 
 export default function SetupPage() {
   return (
@@ -54,8 +55,17 @@ export default function SetupPage() {
                     {process.env.API_KEY ? "已配置" : "未配置"}
                   </span>
                 </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm">OPENAI_API_KEY</span>
+                  <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                    {process.env.OPENAI_API_KEY ? "已配置" : "未配置"}
+                  </span>
+                </div>
               </CardContent>
             </Card>
+
+            {/* AI Status */}
+            <AIStatusChecker />
 
             {/* AI Services */}
             <Card>

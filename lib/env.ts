@@ -10,7 +10,7 @@ const envSchema = z.object({
   NEXTAUTH_URL: z.string().url("Invalid NextAuth URL").optional(),
 
   // AI Services (if you plan to add AI features)
-  OPENAI_API_KEY: z.string().min(1, "OpenAI API key is required").optional(),
+  OPENAI_API_KEY: z.string().min(1, "OpenAI API key is required"),
 
   // Email (if you plan to add email notifications)
   SMTP_HOST: z.string().optional(),
@@ -35,3 +35,12 @@ export const envConfig = env.data
 
 // Type-safe environment variables
 export type EnvConfig = z.infer<typeof envSchema>
+
+export function checkEnvStatus() {
+  return {
+    database: !!envConfig.DATABASE_URL,
+    auth: !!envConfig.NEXTAUTH_SECRET,
+    ai: !!envConfig.OPENAI_API_KEY,
+    allConfigured: !!(envConfig.DATABASE_URL && envConfig.NEXTAUTH_SECRET && envConfig.OPENAI_API_KEY),
+  }
+}

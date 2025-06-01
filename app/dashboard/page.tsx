@@ -1,7 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { FileText, Plus, TrendingUp, Users, Clock, CheckCircle } from "lucide-react"
+import { FileText, Plus, TrendingUp, Users, Clock, CheckCircle, Brain } from "lucide-react"
 import { UserNav } from "@/components/user-nav"
+import Link from "next/link"
 
 export default function DashboardPage() {
   return (
@@ -136,6 +137,12 @@ export default function DashboardPage() {
                   <Users className="h-4 w-4 mr-2" />
                   管理团队成员
                 </Button>
+                <Link href="/ai-tools">
+                  <Button className="w-full justify-start" variant="outline">
+                    <Brain className="h-4 w-4 mr-2" />
+                    AI 智能工具
+                  </Button>
+                </Link>
               </div>
             </CardContent>
           </Card>
