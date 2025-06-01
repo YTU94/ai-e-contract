@@ -121,6 +121,12 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
+                <Link href="/chat">
+                  <Button className="w-full justify-start" variant="outline">
+                    <Brain className="h-4 w-4 mr-2" />
+                    AI 智能助手
+                  </Button>
+                </Link>
                 <Button className="w-full justify-start" variant="outline">
                   <Plus className="h-4 w-4 mr-2" />
                   创建新合同
@@ -140,7 +146,7 @@ export default function DashboardPage() {
                 <Link href="/ai-tools">
                   <Button className="w-full justify-start" variant="outline">
                     <Brain className="h-4 w-4 mr-2" />
-                    AI 智能工具
+                    AI 工具箱
                   </Button>
                 </Link>
               </div>

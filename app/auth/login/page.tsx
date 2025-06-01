@@ -37,7 +37,7 @@ export default function LoginPage() {
       if (result?.error) {
         setError(result.error)
       } else if (result?.ok) {
-        router.push("/dashboard")
+        router.push("/chat") // 改为跳转到 chat 页面
       }
     } catch (err) {
       setError("登录失败，请重试")
