@@ -15,6 +15,8 @@ export async function setupDatabase() {
   } catch (error) {
     console.error("❌ Database connection failed:", error)
     return { success: false, error }
+  } finally {
+    await prisma.$disconnect()
   }
 }
 
@@ -171,6 +173,8 @@ export async function seedDatabase() {
   } catch (error) {
     console.error("❌ Database seeding failed:", error)
     return { success: false, error }
+  } finally {
+    await prisma.$disconnect()
   }
 }
 
@@ -199,5 +203,7 @@ export async function createAuditLog(
     })
   } catch (error) {
     console.error("Failed to create audit log:", error)
+  } finally {
+    await prisma.$disconnect()
   }
 }

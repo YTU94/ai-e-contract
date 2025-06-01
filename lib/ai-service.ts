@@ -8,7 +8,10 @@ const aiModel = openai("gpt-4o")
 export class AIContractService {
   static async analyzeContract(contractContent: string) {
     if (!process.env.OPENAI_API_KEY) {
-      throw new Error("OpenAI API key not configured")
+      return {
+        success: false,
+        error: "OpenAI API key not configured",
+      }
     }
 
     try {
@@ -76,7 +79,10 @@ ${contractContent}
 
   static async generateContract(contractType: string, requirements: string) {
     if (!process.env.OPENAI_API_KEY) {
-      throw new Error("OpenAI API key not configured")
+      return {
+        success: false,
+        error: "OpenAI API key not configured",
+      }
     }
 
     try {
