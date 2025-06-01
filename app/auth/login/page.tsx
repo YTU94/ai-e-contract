@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { FileText, Eye, EyeOff, Loader2 } from "lucide-react"
+import { signIn } from "next-auth/react"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -20,27 +21,23 @@ export default function LoginPage() {
   const [error, setError] = useState("")
   const router = useRouter()
 
+  // Update the handleSubmit function to use NextAuth
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError("")
 
     try {
-      // 这里集成NextAuth.js的signIn方法
-      // const result = await signIn('credentials', {
-      //   email,
-      //   password,
-      //   redirect: false,
-      // })
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      })
 
-      // 模拟登录过程
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
-      // 模拟成功登录
-      if (email === "demo@example.com" && password === "password") {
+      if (result?.error) {
+        setError(result.error)
+      } else if (result?.ok) {
         router.push("/dashboard")
-      } else {
-        setError("邮箱或密码错误")
       }
     } catch (err) {
       setError("登录失败，请重试")

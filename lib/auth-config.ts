@@ -4,15 +4,17 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import { compare } from "bcryptjs"
 import { prisma } from "./prisma"
 
-const authOptions: NextAuthOptions = {
+export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: "/auth/login",
     signUp: "/auth/register",
+    error: "/auth/error",
   },
   providers: [
     CredentialsProvider({
@@ -23,7 +25,7 @@ const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          return null
+          throw new Error("请输入邮箱和密码")
         }
 
         try {
@@ -35,14 +37,14 @@ const authOptions: NextAuthOptions = {
           })
 
           if (!user) {
-            return null
+            throw new Error("用户不存在")
           }
 
           // 验证密码
           const isPasswordValid = await compare(credentials.password, user.password)
 
           if (!isPasswordValid) {
-            return null
+            throw new Error("密码错误")
           }
 
           return {
@@ -53,7 +55,7 @@ const authOptions: NextAuthOptions = {
           }
         } catch (error) {
           console.error("Auth error:", error)
-          return null
+          throw error
         }
       },
     }),
@@ -81,6 +83,12 @@ const authOptions: NextAuthOptions = {
       return token
     },
   },
+  events: {
+    async signIn({ user, account, profile }) {
+      console.log(`User ${user.email} signed in`)
+    },
+    async signOut({ session, token }) {
+      console.log(`User signed out`)
+    },
+  },
 }
-
-export { authOptions }

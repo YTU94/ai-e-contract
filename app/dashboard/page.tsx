@@ -1,6 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { FileText, Plus, TrendingUp, Users, Clock, CheckCircle } from "lucide-react"
+import { UserNav } from "@/components/user-nav"
 
 export default function DashboardPage() {
   return (
@@ -17,9 +18,7 @@ export default function DashboardPage() {
               <Plus className="h-4 w-4 mr-2" />
               新建合同
             </Button>
-            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-              U
-            </div>
+            <UserNav />
           </div>
         </div>
       </header>

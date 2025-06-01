@@ -47,6 +47,7 @@ export default function RegisterPage() {
     }
   }
 
+  // Update the handleSubmit function to call the registration API
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -72,21 +73,29 @@ export default function RegisterPage() {
     }
 
     try {
-      // 这里集成tRPC API调用
-      // const result = await trpc.auth.register.mutate({
-      //   name: formData.name,
-      //   email: formData.email,
-      //   password: formData.password,
-      //   company: formData.company
-      // })
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          company: formData.company,
+        }),
+      })
 
-      // 模拟注册过程
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      const data = await response.json()
 
-      // 模拟成功注册
+      if (!response.ok) {
+        throw new Error(data.error || "注册失败")
+      }
+
+      // 注册成功，跳转到登录页面
       router.push("/auth/login?message=注册成功，请登录")
     } catch (err) {
-      setError("注册失败，请重试")
+      setError(err instanceof Error ? err.message : "注册失败，请重试")
     } finally {
       setIsLoading(false)
     }
