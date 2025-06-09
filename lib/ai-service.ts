@@ -17,9 +17,7 @@ function getAIConfig(): AIConfig {
     return {
       provider: "deepseek",
       model: "deepseek-chat",
-      client: deepseek({
-        apiKey: process.env.DEEPSEEK_API_KEY,
-      }),
+      client: deepseek('deepseek-chat'),
     }
   }
 
@@ -28,9 +26,7 @@ function getAIConfig(): AIConfig {
     return {
       provider: "openai",
       model: "gpt-4o",
-      client: openai({
-        apiKey: process.env.OPENAI_API_KEY,
-      }),
+      client: openai('gpt-4o'),
     }
   }
 
