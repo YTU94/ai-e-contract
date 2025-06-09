@@ -1,78 +1,25 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth-config"
-import { prisma } from "@/lib/prisma"
 import { AIContractService } from "@/lib/ai-service"
-import { z } from "zod"
+import { NextResponse } from "next/server"
 
-const createSchema = z.object({
-  type: z.string().min(1, "合同类型不能为空"),
-  requirements: z.string().min(1, "合同要求不能为空"),
-  title: z.string().optional(),
-  autoSave: z.boolean().optional().default(true),
-})
-
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json({ error: "未授权访问" }, { status: 401 })
-    }
-
     const body = await req.json()
-    const { type, requirements, title, autoSave } = createSchema.parse(body)
+    const { userId, contractId } = body
 
-    // 使用 AI 生成合同内容
-    const aiResult = await AIContractService.generateContract(type, requirements)
-
-    if (!aiResult.success) {
-      return NextResponse.json({ error: aiResult.error }, { status: 500 })
+    if (!userId) {
+      return new NextResponse("User ID is required", { status: 400 })
     }
 
-    let contract = null
-
-    // 如果启用自动保存，将合同保存到数据库
-    if (autoSave) {
-      contract = await prisma.contract.create({
-        data: {
-          title: title || `${type} - ${new Date().toLocaleDateString()}`,
-          content: aiResult.contract!,
-          type,
-          status: "DRAFT",
-          userId: session.user.id,
-          metadata: {
-            requirements,
-            generatedBy: "AI",
-            generatedAt: new Date().toISOString(),
-          },
-        },
-      })
+    if (!contractId) {
+      return new NextResponse("Contract ID is required", { status: 400 })
     }
 
-    return NextResponse.json({
-      success: true,
-      contract: {
-        id: contract?.id,
-        title: contract?.title || title,
-        content: aiResult.contract,
-        type,
-        status: contract?.status || "DRAFT",
-        saved: autoSave,
-      },
-    })
+    const aiContractService = new AIContractService()
+    const chat = await aiContractService.createChat(userId, contractId)
+
+    return NextResponse.json(chat)
   } catch (error) {
-    console.error("Contract creation error:", error)
-
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          error: "请求数据格式错误",
-          details: error.errors,
-        },
-        { status: 400 },
-      )
-    }
-
-    return NextResponse.json({ error: "创建合同失败，请稍后重试" }, { status: 500 })
+    console.log("[CHAT_CREATE_POST]", error)
+    return new NextResponse("Internal error", { status: 500 })
   }
 }
