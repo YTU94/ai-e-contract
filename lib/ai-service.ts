@@ -1,13 +1,13 @@
 // AI service configuration for contract analysis and generation
+import { deepseek } from "@ai-sdk/deepseek"
 import { openai } from "@ai-sdk/openai"
 import { generateText, streamText } from "ai"
 
 // AI 服务配置
 interface AIConfig {
-  provider: "openai" | "deepseek"
+  provider: "deepseek" | "openai"
   model: string
-  apiKey?: string
-  baseURL?: string
+  client: any
 }
 
 // 获取 AI 配置
@@ -17,8 +17,9 @@ function getAIConfig(): AIConfig {
     return {
       provider: "deepseek",
       model: "deepseek-chat",
-      apiKey: process.env.DEEPSEEK_API_KEY,
-      baseURL: "https://api.deepseek.com",
+      client: deepseek({
+        apiKey: process.env.DEEPSEEK_API_KEY,
+      }),
     }
   }
 
@@ -27,39 +28,22 @@ function getAIConfig(): AIConfig {
     return {
       provider: "openai",
       model: "gpt-4o",
-      apiKey: process.env.OPENAI_API_KEY,
+      client: openai({
+        apiKey: process.env.OPENAI_API_KEY,
+      }),
     }
   }
 
-  throw new Error("No AI API key configured")
-}
-
-// 创建 AI 客户端
-function createAIClient() {
-  const config = getAIConfig()
-
-  if (config.provider === "deepseek") {
-    // 使用 OpenAI SDK 兼容 DeepSeek API
-    return openai({
-      apiKey: config.apiKey,
-      baseURL: config.baseURL,
-    })
-  }
-
-  // 默认 OpenAI
-  return openai({
-    apiKey: config.apiKey,
-  })
+  throw new Error("No AI API key configured. Please set DEEPSEEK_API_KEY or OPENAI_API_KEY")
 }
 
 export class AIContractService {
   static async analyzeContract(contractContent: string) {
     try {
       const config = getAIConfig()
-      const client = createAIClient()
 
       const { text } = await generateText({
-        model: client(config.model),
+        model: config.client(config.model),
         prompt: `作为专业的法律AI助手，请分析以下合同内容，并提供详细的分析报告：
 
 合同内容：
@@ -105,6 +89,7 @@ ${contractContent}
 
 请用中文回复，确保分析专业、准确、实用。`,
         maxTokens: 2000,
+        temperature: 0.7,
       })
 
       return {
@@ -125,10 +110,9 @@ ${contractContent}
   static async generateContract(contractType: string, requirements: string) {
     try {
       const config = getAIConfig()
-      const client = createAIClient()
 
       const { text } = await generateText({
-        model: client(config.model),
+        model: config.client(config.model),
         prompt: `作为专业的法律AI助手，请根据以下要求生成一份完整的${contractType}：
 
 需求描述：
@@ -202,6 +186,7 @@ ${requirements}
 
 请确保合同内容专业、完整、符合法律规范，并根据具体需求进行个性化调整。`,
         maxTokens: 3000,
+        temperature: 0.7,
       })
 
       return {
@@ -221,10 +206,9 @@ ${requirements}
 
   static async streamContractGeneration(contractType: string, requirements: string) {
     const config = getAIConfig()
-    const client = createAIClient()
 
     return streamText({
-      model: client(config.model),
+      model: config.client(config.model),
       prompt: `根据以下要求生成一份${contractType}合同模板：
 
 要求：
@@ -232,18 +216,20 @@ ${requirements}
 
 请生成一份完整的合同模板，逐步输出内容。`,
       maxTokens: 3000,
+      temperature: 0.7,
     })
   }
 
-  static async testConnection() {
+  static async testConnection(customPrompt?: string) {
     try {
       const config = getAIConfig()
-      const client = createAIClient()
+      const prompt = customPrompt || "请用一句话介绍人工智能在合同管理中的应用。"
 
       const { text } = await generateText({
-        model: client(config.model),
-        prompt: "请用一句话介绍人工智能在合同管理中的应用。",
-        maxTokens: 100,
+        model: config.client(config.model),
+        prompt,
+        maxTokens: 150,
+        temperature: 0.7,
       })
 
       return {
@@ -261,6 +247,53 @@ ${requirements}
     }
   }
 
+  static async performanceTest() {
+    try {
+      const config = getAIConfig()
+      const startTime = Date.now()
+
+      const testPrompts = ["请简述合同的基本要素。", "什么是违约责任？", "如何确保合同的法律效力？"]
+
+      const results = []
+
+      for (const prompt of testPrompts) {
+        const testStart = Date.now()
+
+        const { text } = await generateText({
+          model: config.client(config.model),
+          prompt,
+          maxTokens: 100,
+          temperature: 0.7,
+        })
+
+        const testEnd = Date.now()
+
+        results.push({
+          prompt,
+          response: text,
+          responseTime: testEnd - testStart,
+        })
+      }
+
+      const totalTime = Date.now() - startTime
+
+      return {
+        success: true,
+        provider: config.provider,
+        model: config.model,
+        totalTime,
+        averageTime: totalTime / testPrompts.length,
+        results,
+      }
+    } catch (error) {
+      console.error("Performance test error:", error)
+      return {
+        success: false,
+        error: this.getErrorMessage(error),
+      }
+    }
+  }
+
   static getAIInfo() {
     try {
       const config = getAIConfig()
@@ -268,7 +301,7 @@ ${requirements}
         available: true,
         provider: config.provider,
         model: config.model,
-        baseURL: config.baseURL,
+        sdkVersion: config.provider === "deepseek" ? "@ai-sdk/deepseek" : "@ai-sdk/openai",
       }
     } catch (error) {
       return {
