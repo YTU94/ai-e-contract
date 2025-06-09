@@ -2,21 +2,64 @@
 import { openai } from "@ai-sdk/openai"
 import { generateText, streamText } from "ai"
 
-// Initialize OpenAI client
-const aiModel = openai("gpt-4o")
+// AI 服务配置
+interface AIConfig {
+  provider: "openai" | "deepseek"
+  model: string
+  apiKey?: string
+  baseURL?: string
+}
+
+// 获取 AI 配置
+function getAIConfig(): AIConfig {
+  // 优先使用 DeepSeek
+  if (process.env.DEEPSEEK_API_KEY) {
+    return {
+      provider: "deepseek",
+      model: "deepseek-chat",
+      apiKey: process.env.DEEPSEEK_API_KEY,
+      baseURL: "https://api.deepseek.com",
+    }
+  }
+
+  // 回退到 OpenAI
+  if (process.env.OPENAI_API_KEY) {
+    return {
+      provider: "openai",
+      model: "gpt-4o",
+      apiKey: process.env.OPENAI_API_KEY,
+    }
+  }
+
+  throw new Error("No AI API key configured")
+}
+
+// 创建 AI 客户端
+function createAIClient() {
+  const config = getAIConfig()
+
+  if (config.provider === "deepseek") {
+    // 使用 OpenAI SDK 兼容 DeepSeek API
+    return openai({
+      apiKey: config.apiKey,
+      baseURL: config.baseURL,
+    })
+  }
+
+  // 默认 OpenAI
+  return openai({
+    apiKey: config.apiKey,
+  })
+}
 
 export class AIContractService {
   static async analyzeContract(contractContent: string) {
-    if (!process.env.OPENAI_API_KEY) {
-      return {
-        success: false,
-        error: "OpenAI API key not configured",
-      }
-    }
-
     try {
+      const config = getAIConfig()
+      const client = createAIClient()
+
       const { text } = await generateText({
-        model: aiModel,
+        model: client(config.model),
         prompt: `作为专业的法律AI助手，请分析以下合同内容，并提供详细的分析报告：
 
 合同内容：
@@ -67,6 +110,8 @@ ${contractContent}
       return {
         success: true,
         analysis: text,
+        provider: config.provider,
+        model: config.model,
       }
     } catch (error) {
       console.error("AI analysis error:", error)
@@ -78,16 +123,12 @@ ${contractContent}
   }
 
   static async generateContract(contractType: string, requirements: string) {
-    if (!process.env.OPENAI_API_KEY) {
-      return {
-        success: false,
-        error: "OpenAI API key not configured",
-      }
-    }
-
     try {
+      const config = getAIConfig()
+      const client = createAIClient()
+
       const { text } = await generateText({
-        model: aiModel,
+        model: client(config.model),
         prompt: `作为专业的法律AI助手，请根据以下要求生成一份完整的${contractType}：
 
 需求描述：
@@ -166,6 +207,8 @@ ${requirements}
       return {
         success: true,
         contract: text,
+        provider: config.provider,
+        model: config.model,
       }
     } catch (error) {
       console.error("Contract generation error:", error)
@@ -177,12 +220,11 @@ ${requirements}
   }
 
   static async streamContractGeneration(contractType: string, requirements: string) {
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error("OpenAI API key not configured")
-    }
+    const config = getAIConfig()
+    const client = createAIClient()
 
     return streamText({
-      model: aiModel,
+      model: client(config.model),
       prompt: `根据以下要求生成一份${contractType}合同模板：
 
 要求：
@@ -193,16 +235,64 @@ ${requirements}
     })
   }
 
+  static async testConnection() {
+    try {
+      const config = getAIConfig()
+      const client = createAIClient()
+
+      const { text } = await generateText({
+        model: client(config.model),
+        prompt: "请用一句话介绍人工智能在合同管理中的应用。",
+        maxTokens: 100,
+      })
+
+      return {
+        success: true,
+        result: text,
+        provider: config.provider,
+        model: config.model,
+      }
+    } catch (error) {
+      console.error("AI test error:", error)
+      return {
+        success: false,
+        error: this.getErrorMessage(error),
+      }
+    }
+  }
+
+  static getAIInfo() {
+    try {
+      const config = getAIConfig()
+      return {
+        available: true,
+        provider: config.provider,
+        model: config.model,
+        baseURL: config.baseURL,
+      }
+    } catch (error) {
+      return {
+        available: false,
+        provider: "none",
+        model: "N/A",
+        error: this.getErrorMessage(error),
+      }
+    }
+  }
+
   private static getErrorMessage(error: any): string {
     if (error instanceof Error) {
       if (error.message.includes("API key")) {
-        return "OpenAI API 密钥无效或已过期"
+        return "AI API 密钥无效或已过期"
       }
       if (error.message.includes("quota")) {
-        return "OpenAI API 配额已用完，请检查账户余额"
+        return "AI API 配额已用完，请检查账户余额"
       }
       if (error.message.includes("rate limit")) {
         return "请求频率过高，请稍后重试"
+      }
+      if (error.message.includes("No AI API key")) {
+        return "未配置 AI API 密钥，请设置 DEEPSEEK_API_KEY 或 OPENAI_API_KEY"
       }
       return error.message
     }

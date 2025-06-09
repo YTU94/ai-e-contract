@@ -1,54 +1,16 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth-config"
-import { AIContractService } from "@/lib/ai-service"
-import { z } from "zod"
+import { NextResponse } from "next/server"
+import { AIContractService } from "@/services/AIContractService"
 
-const analyzeSchema = z.object({
-  content: z.string().min(1, "合同内容不能为空"),
-})
+export async function POST(request: Request) {
+  const { content } = await request.json()
 
-export async function POST(req: NextRequest) {
-  try {
-    // 验证用户身份
-    const session = await getServerSession(authOptions)
-    if (!session) {
-      return NextResponse.json({ error: "未授权访问" }, { status: 401 })
-    }
+  const result = await AIContractService.analyzeContract(content)
 
-    // 验证请求数据
-    const body = await req.json()
-    const { content } = analyzeSchema.parse(body)
-
-    // 调用AI分析服务
-    const result = await AIContractService.analyzeContract(content)
-
-    if (!result.success) {
-      return NextResponse.json({ error: result.error }, { status: 500 })
-    }
-
-    return NextResponse.json({
-      success: true,
-      analysis: result.analysis,
-    })
-  } catch (error) {
-    console.error("Contract analysis API error:", error)
-
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          error: "请求数据格式错误",
-          details: error.errors,
-        },
-        { status: 400 },
-      )
-    }
-
-    return NextResponse.json(
-      {
-        error: "服务器内部错误",
-      },
-      { status: 500 },
-    )
-  }
+  return NextResponse.json({
+    success: result.success,
+    analysis: result.analysis,
+    provider: result.provider,
+    model: result.model,
+    error: result.error,
+  })
 }
