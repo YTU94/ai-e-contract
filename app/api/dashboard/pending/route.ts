@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-config"
-import { prisma } from "@/lib/prisma"
+import { db } from "@/lib/database"
 
 export async function GET(req: NextRequest) {
   try {
@@ -16,20 +16,8 @@ export async function GET(req: NextRequest) {
     const limit = Number.parseInt(searchParams.get("limit") || "10")
 
     // 获取待签署合同
-    const contracts = await prisma.contract.findMany({
-      where: {
-        userId: session.user.id,
-        status: "PENDING",
-      },
-      select: {
-        id: true,
-        title: true,
-        type: true,
-        status: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-      orderBy: { createdAt: "asc" }, // 按创建时间升序，优先显示等待时间长的
+    const contracts = await db.findContractsByUserId(session.user.id, {
+      status: "PENDING",
       skip: (page - 1) * limit,
       take: limit,
     })
@@ -46,12 +34,7 @@ export async function GET(req: NextRequest) {
     })
 
     // 获取总数
-    const total = await prisma.contract.count({
-      where: {
-        userId: session.user.id,
-        status: "PENDING",
-      },
-    })
+    const total = await db.countContracts(session.user.id, "PENDING")
 
     return NextResponse.json({
       contracts: contractsWithWaitingDays,

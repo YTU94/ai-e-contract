@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { hash } from "bcryptjs"
-import { prisma } from "@/lib/prisma"
 import { z } from "zod"
+import { db } from "@/lib/database"
 
 const registerSchema = z.object({
   name: z.string().min(2, "姓名至少需要2个字符"),
@@ -16,9 +16,7 @@ export async function POST(req: NextRequest) {
     const { name, email, password, company } = registerSchema.parse(body)
 
     // 检查用户是否已存在
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    })
+    const existingUser = await db.findUserByEmail(email)
 
     if (existingUser) {
       return NextResponse.json({ error: "该邮箱已被注册" }, { status: 400 })
@@ -28,26 +26,24 @@ export async function POST(req: NextRequest) {
     const hashedPassword = await hash(password, 12)
 
     // 创建用户
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        company,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        company: true,
-        createdAt: true,
-      },
+    const user = await db.createUser({
+      name,
+      email,
+      password: hashedPassword,
+      company,
+      role: "USER",
     })
 
     return NextResponse.json({
       success: true,
       message: "注册成功",
-      user,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        company: user.company,
+        createdAt: user.createdAt,
+      },
     })
   } catch (error) {
     console.error("Registration error:", error)

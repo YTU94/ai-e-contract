@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-config"
-import { prisma } from "@/lib/prisma"
+import { db } from "@/lib/database"
 
 export async function GET(req: NextRequest) {
   try {
@@ -18,45 +18,17 @@ export async function GET(req: NextRequest) {
     const status = searchParams.get("status")
     const type = searchParams.get("type")
 
-    // 构建查询条件
-    const whereClause: any = {
-      userId: session.user.id,
-    }
-
-    if (search) {
-      whereClause.OR = [
-        { title: { contains: search, mode: "insensitive" } },
-        { type: { contains: search, mode: "insensitive" } },
-      ]
-    }
-
-    if (status) {
-      whereClause.status = status
-    }
-
-    if (type) {
-      whereClause.type = { contains: type, mode: "insensitive" }
-    }
-
-    // 获取总数
-    const total = await prisma.contract.count({ where: whereClause })
-
     // 获取合同列表
-    const contracts = await prisma.contract.findMany({
-      where: whereClause,
-      select: {
-        id: true,
-        title: true,
-        type: true,
-        status: true,
-        version: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-      orderBy: { updatedAt: "desc" },
+    const contracts = await db.findContractsByUserId(session.user.id, {
+      search,
+      status,
+      type,
       skip: (page - 1) * limit,
       take: limit,
     })
+
+    // 获取总数
+    const total = await db.countContracts(session.user.id)
 
     return NextResponse.json({
       contracts,

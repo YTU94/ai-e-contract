@@ -3,8 +3,8 @@ import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-config"
 import { generateText } from "ai"
 import { openai } from "@ai-sdk/openai"
-import { prisma } from "@/lib/prisma"
 import { z } from "zod"
+import { db } from "@/lib/database"
 
 const chatSchema = z.object({
   message: z.string().min(1, "消息不能为空"),
@@ -37,19 +37,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 获取用户的合同数据用于上下文
-    const userContracts = await prisma.contract.findMany({
-      where: { userId: session.user.id },
-      select: {
-        id: true,
-        title: true,
-        type: true,
-        status: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-      orderBy: { updatedAt: "desc" },
-      take: 10,
-    })
+    const userContracts = await db.findContractsByUserId(session.user.id, { take: 10 })
 
     // 构建系统提示
     const systemPrompt = `你是 ContractAI 的智能助手，专门帮助用户管理电子合同。你的能力包括：

@@ -6,11 +6,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Database, CheckCircle, XCircle, Loader2, RefreshCw } from "lucide-react"
+import { db } from "@/lib/database"
 
 interface DatabaseStatus {
   success: boolean
   userCount?: number
   error?: any
+  dbType?: string
+  message?: string
 }
 
 export function DatabaseStatus() {
@@ -21,11 +24,22 @@ export function DatabaseStatus() {
   const checkStatus = async () => {
     setIsLoading(true)
     try {
-      const response = await fetch("/api/database/setup")
-      const data = await response.json()
-      setStatus(data)
+      const isConnected = await db.testConnection()
+      const userCount = await db.countUsers()
+      const dbType = db.getDatabaseType()
+
+      setStatus({
+        success: isConnected,
+        userCount,
+        dbType,
+        message: isConnected ? `${dbType === "mock" ? "Mock" : "Postgres"} 数据库连接正常` : "数据库连接失败",
+      })
     } catch (error) {
-      setStatus({ success: false, error: "连接失败" })
+      setStatus({
+        success: false,
+        error: "连接失败",
+        dbType: db.getDatabaseType(),
+      })
     } finally {
       setIsLoading(false)
     }
@@ -34,15 +48,28 @@ export function DatabaseStatus() {
   const setupDatabase = async () => {
     setIsSetupLoading(true)
     try {
-      const response = await fetch("/api/database/setup", {
-        method: "POST",
-      })
-      const data = await response.json()
+      const dbType = db.getDatabaseType()
 
-      if (data.success) {
-        await checkStatus()
+      if (dbType === "mock") {
+        // Mock database is always ready
+        setStatus({
+          success: true,
+          userCount: await db.countUsers(),
+          dbType: "mock",
+          message: "Mock 数据库已准备就绪",
+        })
       } else {
-        setStatus(data)
+        // For real database, call the setup API
+        const response = await fetch("/api/database/setup", {
+          method: "POST",
+        })
+        const data = await response.json()
+
+        if (data.success) {
+          await checkStatus()
+        } else {
+          setStatus(data)
+        }
       }
     } catch (error) {
       setStatus({ success: false, error: "设置失败" })
@@ -71,7 +98,7 @@ export function DatabaseStatus() {
               <>
                 <CheckCircle className="h-5 w-5 text-green-500" />
                 <Badge variant="secondary" className="bg-green-100 text-green-800">
-                  已连接
+                  {status.dbType === "mock" ? "Mock 数据库" : "Postgres 数据库"}
                 </Badge>
                 {status.userCount !== undefined && (
                   <span className="text-sm text-gray-600">用户数: {status.userCount}</span>

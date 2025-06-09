@@ -1,36 +1,74 @@
 import { NextResponse } from "next/server"
-import { setupDatabase, seedDatabase } from "@/lib/database-setup"
+import { db } from "@/lib/database"
 
 export async function POST() {
   try {
-    // 设置数据库连接
-    const setupResult = await setupDatabase()
-    if (!setupResult.success) {
-      return NextResponse.json({ error: "数据库连接失败", details: setupResult.error }, { status: 500 })
+    const dbType = db.getDatabaseType()
+
+    if (dbType === "mock") {
+      // Mock database is always ready
+      const userCount = await db.countUsers()
+      return NextResponse.json({
+        success: true,
+        message: "Mock 数据库已准备就绪",
+        userCount,
+        dbType: "mock",
+      })
     }
 
-    // 初始化数据
-    const seedResult = await seedDatabase()
-    if (!seedResult.success) {
-      return NextResponse.json({ error: "数据库初始化失败", details: seedResult.error }, { status: 500 })
+    // For real database, test connection and setup
+    const isConnected = await db.testConnection()
+    if (!isConnected) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "数据库连接失败",
+        },
+        { status: 500 },
+      )
     }
+
+    const userCount = await db.countUsers()
 
     return NextResponse.json({
       success: true,
       message: "数据库设置完成",
-      userCount: setupResult.userCount,
+      userCount,
+      dbType: "postgres",
     })
   } catch (error) {
     console.error("Database setup error:", error)
-    return NextResponse.json({ error: "数据库设置失败", details: error }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        error: "数据库设置失败",
+        details: error,
+      },
+      { status: 500 },
+    )
   }
 }
 
 export async function GET() {
   try {
-    const result = await setupDatabase()
-    return NextResponse.json(result)
+    const isConnected = await db.testConnection()
+    const userCount = isConnected ? await db.countUsers() : 0
+    const dbType = db.getDatabaseType()
+
+    return NextResponse.json({
+      success: isConnected,
+      userCount,
+      dbType,
+      message: isConnected ? `${dbType === "mock" ? "Mock" : "Postgres"} 数据库连接正常` : "数据库连接失败",
+    })
   } catch (error) {
-    return NextResponse.json({ error: "数据库状态检查失败", details: error }, { status: 500 })
+    return NextResponse.json(
+      {
+        success: false,
+        error: "数据库状态检查失败",
+        details: error,
+      },
+      { status: 500 },
+    )
   }
 }

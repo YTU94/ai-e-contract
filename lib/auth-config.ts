@@ -3,6 +3,7 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import { compare } from "bcryptjs"
 import { prisma } from "./prisma"
+import { db } from "./database"
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
@@ -30,11 +31,7 @@ export const authOptions: NextAuthOptions = {
 
         try {
           // 查找用户
-          const user = await prisma.user.findUnique({
-            where: {
-              email: credentials.email,
-            },
-          })
+          const user = await db.findUserByEmail(credentials.email)
 
           if (!user) {
             throw new Error("用户不存在")

@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-config"
-import { prisma } from "@/lib/prisma"
+import { db } from "@/lib/database"
 
 export async function GET(req: NextRequest) {
   try {
@@ -16,54 +16,34 @@ export async function GET(req: NextRequest) {
     const limit = Number.parseInt(searchParams.get("limit") || "10")
 
     // 获取已完成合同
-    const contracts = await prisma.contract.findMany({
-      where: {
-        userId: session.user.id,
-        status: "COMPLETED",
-      },
-      select: {
-        id: true,
-        title: true,
-        type: true,
-        status: true,
-        updatedAt: true,
-        signatures: {
-          select: {
-            id: true,
-            signedAt: true,
-          },
-        },
-        metadata: true,
-      },
-      orderBy: { updatedAt: "desc" },
+    const contracts = await db.findContractsByUserId(session.user.id, {
+      status: "COMPLETED",
       skip: (page - 1) * limit,
       take: limit,
     })
 
     // 处理数据，添加签名数量和完成时间
-    const contractsWithDetails = contracts.map((contract) => {
-      const lastSignature = contract.signatures.sort(
-        (a, b) => new Date(b.signedAt).getTime() - new Date(a.signedAt).getTime(),
-      )[0]
+    const contractsWithDetails = await Promise.all(
+      contracts.map(async (contract) => {
+        const signatures = await db.findSignaturesByContractId(contract.id)
+        const lastSignature = signatures.sort(
+          (a, b) => new Date(b.signedAt).getTime() - new Date(a.signedAt).getTime(),
+        )[0]
 
-      return {
-        id: contract.id,
-        title: contract.title,
-        type: contract.type,
-        status: contract.status,
-        completedAt: lastSignature?.signedAt || contract.updatedAt,
-        signaturesCount: contract.signatures.length,
-        totalValue: contract.metadata?.totalValue || null,
-      }
-    })
+        return {
+          id: contract.id,
+          title: contract.title,
+          type: contract.type,
+          status: contract.status,
+          completedAt: lastSignature?.signedAt || contract.updatedAt,
+          signaturesCount: signatures.length,
+          totalValue: contract.metadata?.totalValue || null,
+        }
+      }),
+    )
 
     // 获取总数
-    const total = await prisma.contract.count({
-      where: {
-        userId: session.user.id,
-        status: "COMPLETED",
-      },
-    })
+    const total = await db.countContracts(session.user.id, "COMPLETED")
 
     return NextResponse.json({
       contracts: contractsWithDetails,

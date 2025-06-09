@@ -94,27 +94,38 @@ export default function SetupPage() {
                   <Database className="h-5 w-5" />
                   <span>系统信息</span>
                 </CardTitle>
-                <CardDescription>当前系统配置信息</CardDescription>
+                <CardDescription>当前系统配置和运行状态</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="text-sm space-y-2">
                   <div className="flex justify-between">
-                    <span>Node.js 版本:</span>
-                    <span className="text-gray-600">{process.version}</span>
+                    <span>数据库类型:</span>
+                    <span className="text-gray-600">
+                      {process.env.DATABASE_URL ? "Vercel Postgres" : "Mock Database (Preview)"}
+                    </span>
                   </div>
                   <div className="flex justify-between">
-                    <span>环境:</span>
+                    <span>运行环境:</span>
                     <span className="text-gray-600">{process.env.NODE_ENV}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>数据库类型:</span>
-                    <span className="text-gray-600">PostgreSQL (Vercel)</span>
+                    <span>AI 服务:</span>
+                    <span className="text-gray-600">{process.env.OPENAI_API_KEY ? "OpenAI GPT-4" : "未配置"}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>认证方式:</span>
+                    <span>认证服务:</span>
                     <span className="text-gray-600">NextAuth.js</span>
                   </div>
                 </div>
+
+                {!process.env.DATABASE_URL && (
+                  <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                      <strong>Preview 模式:</strong> 当前使用内存数据库，数据不会持久化。 部署到生产环境时请配置
+                      DATABASE_URL 环境变量。
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
