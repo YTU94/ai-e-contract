@@ -19,6 +19,13 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
+  // 开发环境禁用重定向
+  async redirects() {
+    if (process.env.NODE_ENV === 'development') {
+      return []
+    }
+    return []
+  },
 }
 
 export default nextConfig

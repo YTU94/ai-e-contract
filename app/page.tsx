@@ -1,9 +1,19 @@
+"use client"
+
+import { useEffect } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { FileText, Shield, Zap, Users } from "lucide-react"
+import { redirect } from "next/navigation"
 
 export default function HomePage() {
+  // 开发模式下直接重定向到后台首页
+  if (process.env.NODE_ENV === "development") {
+    redirect("/dashboard")
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       {/* Header */}

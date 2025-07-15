@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -19,7 +19,24 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState("")
+  const [dbStatus, setDbStatus] = useState<any>(null)
   const router = useRouter()
+
+  // 检查数据库状态
+  useEffect(() => {
+    const checkDatabase = async () => {
+      try {
+        const response = await fetch("/api/system-info")
+        const info = await response.json()
+        setDbStatus(info)
+        console.log("系统信息:", info)
+      } catch (error) {
+        console.error("获取系统信息失败:", error)
+      }
+    }
+    
+    checkDatabase()
+  }, [])
 
   // Update the handleSubmit function to use NextAuth
   const handleSubmit = async (e: React.FormEvent) => {
@@ -28,6 +45,24 @@ export default function LoginPage() {
     setError("")
 
     try {
+      // 开发模式下检查数据库连接状态
+      if (process.env.NODE_ENV === "development") {
+        try {
+          const dbResponse = await fetch("/api/database/setup")
+          const dbStatus = await dbResponse.json()
+          console.log("数据库状态:", dbStatus)
+          
+          if (!dbStatus.success) {
+            setError(`数据库连接失败: ${dbStatus.error || "未知错误"}`)
+            return
+          }
+        } catch (dbError) {
+          console.error("数据库检查失败:", dbError)
+          setError("无法连接到数据库服务")
+          return
+        }
+      }
+
       const result = await signIn("credentials", {
         email,
         password,
@@ -37,7 +72,7 @@ export default function LoginPage() {
       if (result?.error) {
         setError(result.error)
       } else if (result?.ok) {
-        router.push("/chat") // 改为跳转到 chat 页面
+        router.push("/dashboard") // 登录成功后跳转到仪表板
       }
     } catch (err) {
       setError("登录失败，请重试")
@@ -134,6 +169,19 @@ export default function LoginPage() {
                 密码: password
               </p>
             </div>
+
+            {/* 数据库状态 */}
+            {dbStatus && (
+              <div className="mt-2 p-3 bg-gray-50 rounded-lg">
+                <p className="text-xs text-gray-600">
+                  <strong>数据库状态：</strong>
+                  <span className={dbStatus.database?.connected ? "text-green-600" : "text-red-600"}>
+                    {dbStatus.database?.connected ? "已连接" : "未连接"}
+                  </span>
+                  ({dbStatus.database?.type})
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
