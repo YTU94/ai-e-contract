@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 获取用户的合同数据用于上下文
-    const userContracts = await db.findContractsByUserId(session.user.id, { take: 10 })
+    const userContracts = await db.findContractsByUserId(session?.user?.id, { take: 10 })
 
     // 构建系统提示
     const systemPrompt = `你是 ContractAI 的智能助手，专门帮助用户管理电子合同。你的能力包括：
@@ -49,9 +49,9 @@ export async function POST(req: NextRequest) {
 5. **合同管理** - 提供合同状态跟踪和管理建议
 
 用户信息：
-- 姓名：${session.user.name}
-- 邮箱：${session.user.email}
-- 公司：${session.user.company || "未设置"}
+- 姓名：${session?.user?.name}
+- 邮箱：${session?.user?.email}
+- 公司：${session?.user?.company || "未设置"}
 
 用户当前的合同列表：
 ${userContracts

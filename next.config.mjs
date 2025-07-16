@@ -19,11 +19,12 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // 开发环境禁用重定向
+  // 确保没有重定向干扰
   async redirects() {
-    if (process.env.NODE_ENV === 'development') {
-      return []
-    }
+    return []
+  },
+  // 确保没有重写规则干扰
+  async rewrites() {
     return []
   },
 }

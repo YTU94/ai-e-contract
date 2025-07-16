@@ -42,7 +42,7 @@ export default withAuth(
 
 // 开发模式下禁用中间件
 export const config = {
-  matcher: process.env.NODE_ENV === "development" 
-    ? [] 
-    : ["/((?!api/auth|_next/static|_next/image|favicon.ico|public).*)"],
+  matcher: [
+    "/((?!api|_next/static|_next/image|favicon.ico|auth).*)",
+  ],
 }
