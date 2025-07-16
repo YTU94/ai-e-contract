@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { FileText, Plus, TrendingUp, Users, Clock, CheckCircle, Brain } from "lucide-react"
+import { FileText, Plus, TrendingUp, Users, Clock, CheckCircle, Brain, Upload } from "lucide-react"
 import { UserNav } from "@/components/user-nav"
 import Link from "next/link"
 
@@ -15,10 +15,12 @@ export default function DashboardPage() {
             <span className="text-2xl font-bold text-gray-900">ContractAI</span>
           </div>
           <div className="flex items-center space-x-4">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              新建合同
-            </Button>
+            <Link href="/contracts/upload">
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                新建合同
+              </Button>
+            </Link>
             <UserNav />
           </div>
         </div>
@@ -135,10 +137,12 @@ export default function DashboardPage() {
                     AI 智能助手
                   </Button>
                 </Link>
-                <Button className="w-full justify-start" variant="outline">
-                  <Plus className="h-4 w-4 mr-2" />
-                  创建新合同
-                </Button>
+                <Link href="/contracts/upload">
+                  <Button className="w-full justify-start" variant="outline">
+                    <Plus className="h-4 w-4 mr-2" />
+                    创建新合同
+                  </Button>
+                </Link>
                 <Button className="w-full justify-start" variant="outline">
                   <FileText className="h-4 w-4 mr-2" />
                   上传合同模板
