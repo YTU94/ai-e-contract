@@ -121,10 +121,12 @@ export default function DashboardLayout({
                 <h1 className="text-2xl font-bold text-gray-900">{getPageTitle()}</h1>
               </div>
               <div className="flex items-center space-x-4">
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  新建合同
-                </Button>
+                <Link href="/dashboard/contracts/new">
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    新建合同
+                  </Button>
+                </Link>
                 <UserNav />
               </div>
             </div>
