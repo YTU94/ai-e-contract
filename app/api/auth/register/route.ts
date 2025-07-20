@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error: "请求数据格式错误",
-          details: error.errors,
+          details: error.issues,
         },
         { status: 400 },
       )

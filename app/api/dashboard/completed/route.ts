@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
           status: contract.status,
           completedAt: lastSignature?.signedAt || contract.updatedAt,
           signaturesCount: signatures.length,
-          totalValue: contract.metadata?.totalValue || null,
+          totalValue: (contract.metadata as any)?.totalValue || null,
         }
       }),
     )

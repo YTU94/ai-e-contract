@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 
 export async function GET() {
   try {
-    const envStatus = {
+    const envStatus: any = {
       DATABASE_URL: {
         configured: !!process.env.DATABASE_URL,
         valid:
@@ -35,8 +35,8 @@ export async function GET() {
       },
     }
 
-    const allConfigured = Object.values(envStatus).every((env) => env.configured)
-    const allValid = Object.values(envStatus).every((env) => env.valid !== false)
+    const allConfigured = Object.values(envStatus).every((env: any) => env.configured)
+    const allValid = Object.values(envStatus).every((env: any) => env.valid !== false)
 
     return NextResponse.json({
       success: allConfigured && allValid,
@@ -44,8 +44,8 @@ export async function GET() {
       variables: envStatus,
       summary: {
         total: Object.keys(envStatus).length,
-        configured: Object.values(envStatus).filter((env) => env.configured).length,
-        valid: Object.values(envStatus).filter((env) => env.valid !== false).length,
+        configured: Object.values(envStatus).filter((env: any) => env.configured).length,
+        valid: Object.values(envStatus).filter((env: any) => env.valid !== false).length,
       },
     })
   } catch (error) {

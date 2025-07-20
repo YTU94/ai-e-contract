@@ -10,8 +10,7 @@ export async function POST(req: Request) {
       return new NextResponse("Prompt is required", { status: 400 })
     }
 
-    const aiContractService = new AIContractService()
-    const contract = await aiContractService.generateContract(prompt)
+    const contract = await AIContractService.generateContract("合同", prompt)
 
     return NextResponse.json({ contract })
   } catch (error) {

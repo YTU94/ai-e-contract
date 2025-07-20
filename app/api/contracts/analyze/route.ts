@@ -9,8 +9,7 @@ export async function POST(request: Request) {
       return new NextResponse("Contract code is required", { status: 400 })
     }
 
-    const aiContractService = new AIContractService()
-    const analysis = await aiContractService.analyzeContract(contractCode)
+    const analysis = await AIContractService.analyzeContract(contractCode)
 
     return NextResponse.json(analysis)
   } catch (error: any) {

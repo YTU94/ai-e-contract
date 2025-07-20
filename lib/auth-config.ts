@@ -14,6 +14,7 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
   pages: {
     signIn: "/auth/login",
+    // @ts-ignore
     signUp: "/auth/register",
     error: "/auth/error",
   },

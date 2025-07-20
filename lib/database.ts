@@ -77,6 +77,7 @@ export class DatabaseService {
         type: true,
         status: true,
         version: true,
+        metadata: true,
         createdAt: true,
         updatedAt: true,
       },
@@ -208,8 +209,9 @@ export class DatabaseService {
       const partner = partnersMap.get(email)
       partner.contractsCount += 1
 
-      if (signature.contract.metadata?.totalValue) {
-        partner.totalValue += signature.contract.metadata.totalValue
+      const metadata = signature.contract.metadata as any
+      if (metadata?.totalValue) {
+        partner.totalValue += metadata.totalValue
       }
 
       if (new Date(signature.signedAt) > new Date(partner.lastContractDate)) {
