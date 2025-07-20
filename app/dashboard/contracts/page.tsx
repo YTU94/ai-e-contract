@@ -124,33 +124,7 @@ export default function ContractsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Link href="/dashboard">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                返回仪表板
-              </Button>
-            </Link>
-            <div className="flex items-center space-x-2">
-              <FileText className="h-8 w-8 text-blue-600" />
-              <span className="text-2xl font-bold text-gray-900">合同管理</span>
-            </div>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Button>
-              <FileText className="h-4 w-4 mr-2" />
-              新建合同
-            </Button>
-            <UserNav />
-          </div>
-        </div>
-      </header>
-
-      <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8">
         <Card>
           <CardHeader>
             <CardTitle>所有合同</CardTitle>
@@ -167,6 +141,5 @@ export default function ContractsPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
   )
 }

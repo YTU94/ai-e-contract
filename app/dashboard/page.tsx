@@ -1,108 +1,11 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { FileText, Plus, TrendingUp, Users, Clock, CheckCircle, Brain, Upload, BarChart3, Settings } from "lucide-react"
-import { UserNav } from "@/components/user-nav"
-import { 
-  Sidebar, 
-  SidebarContent, 
-  SidebarHeader, 
-  SidebarMenu, 
-  SidebarMenuItem, 
-  SidebarMenuButton, 
-  SidebarProvider,
-  SidebarInset,
-  SidebarTrigger 
-} from "@/components/ui/sidebar"
+import { TrendingUp, Users, Clock, CheckCircle, Upload, Plus, FileText, Brain } from "lucide-react"
 import Link from "next/link"
-
-const sidebarItems = [
-  {
-    title: "数据总览",
-    icon: BarChart3,
-    href: "/dashboard",
-    isActive: true
-  },
-  {
-    title: "合同管理",
-    icon: FileText,
-    href: "/dashboard/contracts",
-    subItems: [
-      { title: "所有合同", href: "/dashboard/contracts" },
-      { title: "待签署", href: "/dashboard/pending" },
-      { title: "已完成", href: "/dashboard/completed" },
-      { title: "合作伙伴", href: "/dashboard/partners" }
-    ]
-  },
-  {
-    title: "AI功能管理",
-    icon: Brain,
-    href: "/ai-tools",
-    subItems: [
-      { title: "AI助手", href: "/chat" },
-      { title: "AI工具箱", href: "/ai-tools" }
-    ]
-  }
-]
 
 export default function DashboardPage() {
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <Sidebar>
-          <SidebarHeader className="border-b px-6 py-[20px]">
-            <div className="flex items-center space-x-2">
-              <FileText className="h-8 w-8 text-blue-600" />
-              <span className="text-xl font-bold text-gray-900">ContractAI</span>
-            </div>
-          </SidebarHeader>
-          
-          <SidebarContent className="px-4 py-6">
-            <SidebarMenu>
-              {sidebarItems.map((item) => (
-                <SidebarMenuItem key={item.href}>
-                  <SidebarMenuButton asChild isActive={item.isActive}>
-                    <Link href={item.href} className="flex items-center space-x-3 px-3 py-2 rounded-lg">
-                      <item.icon className="h-5 w-5" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                  
-                  {item.subItems && (
-                    <div className="ml-8 mt-2 space-y-1">
-                      {item.subItems.map((subItem) => (
-                        <SidebarMenuButton key={subItem.href} asChild size="sm">
-                          <Link href={subItem.href} className="flex items-center px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 rounded-md">
-                            {subItem.title}
-                          </Link>
-                        </SidebarMenuButton>
-                      ))}
-                    </div>
-                  )}
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarContent>
-        </Sidebar>
-
-        <SidebarInset className="flex-1">
-          {/* Header */}
-          <header className="bg-white border-b">
-            <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <SidebarTrigger />
-                <h1 className="text-2xl font-bold text-gray-900">数据总览</h1>
-              </div>
-              <div className="flex items-center space-x-4">
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  新建合同
-                </Button>
-                <UserNav />
-              </div>
-            </div>
-          </header>
-
-          <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8">
             {/* Welcome Section */}
             <div className="mb-8">
               <h1 className="text-3xl font-bold text-gray-900 mb-2">欢迎回来！</h1>
@@ -240,8 +143,5 @@ export default function DashboardPage() {
               </Card>
             </div>
           </div>
-        </SidebarInset>
-      </div>
-    </SidebarProvider>
   )
 }

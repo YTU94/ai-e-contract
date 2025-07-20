@@ -153,33 +153,7 @@ export default function PartnersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Link href="/dashboard">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                返回仪表板
-              </Button>
-            </Link>
-            <div className="flex items-center space-x-2">
-              <Users className="h-8 w-8 text-purple-600" />
-              <span className="text-2xl font-bold text-gray-900">合作伙伴</span>
-            </div>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Button>
-              <Users className="h-4 w-4 mr-2" />
-              添加合作伙伴
-            </Button>
-            <UserNav />
-          </div>
-        </div>
-      </header>
-
-      <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8">
         <Card>
           <CardHeader>
             <CardTitle>合作伙伴管理</CardTitle>
@@ -196,6 +170,5 @@ export default function PartnersPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
   )
 }

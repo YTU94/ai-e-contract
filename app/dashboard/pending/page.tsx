@@ -138,27 +138,7 @@ export default function PendingContractsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Link href="/dashboard">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                返回仪表板
-              </Button>
-            </Link>
-            <div className="flex items-center space-x-2">
-              <Clock className="h-8 w-8 text-yellow-600" />
-              <span className="text-2xl font-bold text-gray-900">待签署合同</span>
-            </div>
-          </div>
-          <UserNav />
-        </div>
-      </header>
-
-      <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8">
         <Card>
           <CardHeader>
             <CardTitle>待签署合同</CardTitle>
@@ -175,6 +155,5 @@ export default function PendingContractsPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
   )
 }
