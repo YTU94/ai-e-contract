@@ -2,6 +2,7 @@
 import { deepseek } from "@ai-sdk/deepseek"
 import { openai } from "@ai-sdk/openai"
 import { generateText, streamText } from "ai"
+import { remoteAPIClient, shouldUseRemoteAPI, type APIResponse } from "./remote-api-config"
 
 // AI 服务配置
 interface AIConfig {
@@ -35,6 +36,11 @@ function getAIConfig(): AIConfig {
 
 export class AIContractService {
   static async analyzeContract(contractContent: string) {
+    // 检查是否使用远程API
+    if (shouldUseRemoteAPI()) {
+      return this.analyzeContractRemote(contractContent)
+    }
+
     try {
       const config = getAIConfig()
 
@@ -93,17 +99,64 @@ ${contractContent}
         analysis: text,
         provider: config.provider,
         model: config.model,
+        source: "local",
       }
     } catch (error) {
       console.error("AI analysis error:", error)
       return {
         success: false,
         error: this.getErrorMessage(error),
+        source: "local",
+      }
+    }
+  }
+
+  // 远程API合同分析
+  static async analyzeContractRemote(contractContent: string) {
+    try {
+      const response = await remoteAPIClient.post<{
+        analysis: string
+        provider: string
+        model: string
+      }>("/api/contracts/analyze", {
+        contractContent,
+        options: {
+          maxTokens: 2000,
+          temperature: 0.7,
+        },
+      })
+
+      if (response.success && response.data) {
+        return {
+          success: true,
+          analysis: response.data.analysis,
+          provider: response.data.provider,
+          model: response.data.model,
+          source: "remote",
+        }
+      }
+
+      return {
+        success: false,
+        error: response.error || "Remote API analysis failed",
+        source: "remote",
+      }
+    } catch (error) {
+      console.error("Remote AI analysis error:", error)
+      return {
+        success: false,
+        error: this.getErrorMessage(error),
+        source: "remote",
       }
     }
   }
 
   static async generateContract(contractType: string, requirements: string) {
+    // 检查是否使用远程API
+    if (shouldUseRemoteAPI()) {
+      return this.generateContractRemote(contractType, requirements)
+    }
+
     try {
       const config = getAIConfig()
 
@@ -190,12 +243,55 @@ ${requirements}
         contract: text,
         provider: config.provider,
         model: config.model,
+        source: "local",
       }
     } catch (error) {
       console.error("Contract generation error:", error)
       return {
         success: false,
         error: this.getErrorMessage(error),
+        source: "local",
+      }
+    }
+  }
+
+  // 远程API合同生成
+  static async generateContractRemote(contractType: string, requirements: string) {
+    try {
+      const response = await remoteAPIClient.post<{
+        contract: string
+        provider: string
+        model: string
+      }>("/api/contracts/generate", {
+        contractType,
+        requirements,
+        options: {
+          maxTokens: 3000,
+          temperature: 0.7,
+        },
+      })
+
+      if (response.success && response.data) {
+        return {
+          success: true,
+          contract: response.data.contract,
+          provider: response.data.provider,
+          model: response.data.model,
+          source: "remote",
+        }
+      }
+
+      return {
+        success: false,
+        error: response.error || "Remote API generation failed",
+        source: "remote",
+      }
+    } catch (error) {
+      console.error("Remote contract generation error:", error)
+      return {
+        success: false,
+        error: this.getErrorMessage(error),
+        source: "remote",
       }
     }
   }
@@ -217,6 +313,11 @@ ${requirements}
   }
 
   static async testConnection(customPrompt?: string) {
+    // 检查是否使用远程API
+    if (shouldUseRemoteAPI()) {
+      return this.testConnectionRemote(customPrompt)
+    }
+
     try {
       const config = getAIConfig()
       const prompt = customPrompt || "请用一句话介绍人工智能在合同管理中的应用。"
@@ -233,12 +334,56 @@ ${requirements}
         result: text,
         provider: config.provider,
         model: config.model,
+        source: "local",
       }
     } catch (error) {
       console.error("AI test error:", error)
       return {
         success: false,
         error: this.getErrorMessage(error),
+        source: "local",
+      }
+    }
+  }
+
+  // 远程API测试连接
+  static async testConnectionRemote(customPrompt?: string) {
+    try {
+      const prompt = customPrompt || "请用一句话介绍人工智能在合同管理中的应用。"
+
+      const response = await remoteAPIClient.post<{
+        result: string
+        provider: string
+        model: string
+      }>("/api/ai/test", {
+        prompt,
+        options: {
+          maxTokens: 150,
+          temperature: 0.7,
+        },
+      })
+
+      if (response.success && response.data) {
+        return {
+          success: true,
+          result: response.data.result,
+          provider: response.data.provider,
+          model: response.data.model,
+          source: "remote",
+        }
+      }
+
+      return {
+        success: false,
+        error: response.error || "Remote API test failed",
+        source: "remote",
+      }
+    } catch (error) {
+      console.error("Remote AI test error:", error)
+      return {
+        success: false,
+        error: this.getErrorMessage(error),
+        source: "remote",
       }
     }
   }
@@ -292,11 +437,26 @@ ${requirements}
 
   static getAIInfo() {
     try {
+      // 如果使用远程API
+      if (shouldUseRemoteAPI()) {
+        const remoteConfig = remoteAPIClient.getConfig()
+        return {
+          available: !!remoteConfig,
+          provider: "remote",
+          model: "remote-api",
+          source: "remote",
+          baseURL: remoteConfig?.baseURL || "Not configured",
+          sdkVersion: "remote-api-client",
+        }
+      }
+
+      // 使用本地AI配置
       const config = getAIConfig()
       return {
         available: true,
         provider: config.provider,
         model: config.model,
+        source: "local",
         sdkVersion: config.provider === "deepseek" ? "@ai-sdk/deepseek" : "@ai-sdk/openai",
       }
     } catch (error) {
@@ -304,6 +464,7 @@ ${requirements}
         available: false,
         provider: "none",
         model: "N/A",
+        source: shouldUseRemoteAPI() ? "remote" : "local",
         error: this.getErrorMessage(error),
       }
     }

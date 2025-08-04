@@ -9,8 +9,15 @@ const envSchema = z.object({
   NEXTAUTH_SECRET: z.string().min(1, "NextAuth secret is required"),
   NEXTAUTH_URL: z.string().url("Invalid NextAuth URL").optional(),
 
-  // AI Services (if you plan to add AI features)
-  OPENAI_API_KEY: z.string().min(1, "OpenAI API key is required"),
+  // AI Services
+  OPENAI_API_KEY: z.string().optional(),
+  DEEPSEEK_API_KEY: z.string().optional(),
+
+  // Remote API Configuration
+  USE_REMOTE_API: z.string().transform(val => val === "true").default("false"),
+  REMOTE_API_BASE_URL: z.string().url("Invalid remote API base URL").optional(),
+  REMOTE_API_KEY: z.string().optional(),
+  REMOTE_API_TIMEOUT: z.string().transform(val => parseInt(val) || 30000).default("30000"),
 
   // Email (if you plan to add email notifications)
   SMTP_HOST: z.string().optional(),
@@ -37,10 +44,15 @@ export const envConfig = env.data
 export type EnvConfig = z.infer<typeof envSchema>
 
 export function checkEnvStatus() {
+  const hasAI = !!(envConfig.OPENAI_API_KEY || envConfig.DEEPSEEK_API_KEY)
+  const hasRemoteAPI = envConfig.USE_REMOTE_API ? !!(envConfig.REMOTE_API_BASE_URL && envConfig.REMOTE_API_KEY) : true
+
   return {
     database: !!envConfig.DATABASE_URL,
     auth: !!envConfig.NEXTAUTH_SECRET,
-    ai: !!envConfig.OPENAI_API_KEY,
-    allConfigured: !!(envConfig.DATABASE_URL && envConfig.NEXTAUTH_SECRET && envConfig.OPENAI_API_KEY),
+    ai: hasAI,
+    remoteAPI: hasRemoteAPI,
+    useRemoteAPI: envConfig.USE_REMOTE_API,
+    allConfigured: !!(envConfig.DATABASE_URL && envConfig.NEXTAUTH_SECRET && hasAI && hasRemoteAPI),
   }
 }
