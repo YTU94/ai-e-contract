@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth-config"
+import { db } from "@/lib/database"
 
 export async function GET(
   req: NextRequest,
@@ -14,57 +15,19 @@ export async function GET(
 
     const contractId = params.id
 
-    // 这里应该从数据库获取合同信息
-    // 暂时返回模拟数据
-    const mockContract = {
-      id: contractId,
-      title: "销售合同示例",
-      content: `这是一份销售合同的示例内容。
-
-第一条 合同双方
-甲方：示例公司
-乙方：客户公司
-
-第二条 合同标的
-本合同标的为商品销售服务。
-
-第三条 价格条款
-合同总价为人民币100,000元整。
-
-第四条 付款方式
-采用分期付款方式，首付30%，余款在交付时支付。
-
-第五条 交付条款
-甲方应在合同签署后30日内完成交付。
-
-第六条 质量保证
-甲方保证所提供商品符合国家相关标准。
-
-第七条 违约责任
-任何一方违约，应承担违约金为合同总价的10%。
-
-第八条 争议解决
-因本合同引起的争议，双方应友好协商解决。
-
-第九条 其他条款
-本合同一式两份，双方各执一份，具有同等法律效力。
-
-第十条 生效条款
-本合同自双方签字盖章之日起生效。`,
-      status: "DRAFT",
-      type: "销售合同",
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      userId: session.user.id,
-      pdfUrl: null, // 如果是PDF上传的合同，这里会有PDF URL
-      metadata: {
-        createdFrom: "template",
-        fileSize: null,
-        originalFileName: null
-      }
+    // 从数据库获取合同信息
+    const contract = await db.findContractById(contractId)
+    
+    if (!contract) {
+      return NextResponse.json({ error: "合同未找到" }, { status: 404 })
     }
 
-    return NextResponse.json(mockContract)
+    // 验证用户权限（只能查看自己的合同）
+    if (contract.userId !== session.user.id) {
+      return NextResponse.json({ error: "无权访问此合同" }, { status: 403 })
+    }
+
+    return NextResponse.json(contract)
 
   } catch (error) {
     console.error('获取合同失败:', error)
@@ -88,12 +51,27 @@ export async function PUT(
     const contractId = params.id
     const body = await req.json()
 
-    // 这里应该更新数据库中的合同信息
-    console.log('更新合同:', contractId, body)
+    // 验证合同存在
+    const existingContract = await db.findContractById(contractId)
+    if (!existingContract) {
+      return NextResponse.json({ error: "合同未找到" }, { status: 404 })
+    }
+
+    // 验证用户权限
+    if (existingContract.userId !== session.user.id) {
+      return NextResponse.json({ error: "无权修改此合同" }, { status: 403 })
+    }
+
+    // 更新数据库中的合同信息
+    const updatedContract = await db.updateContract(contractId, {
+      ...body,
+      updatedAt: new Date(),
+    })
 
     return NextResponse.json({
       success: true,
-      message: "合同更新成功"
+      message: "合同更新成功",
+      contract: updatedContract
     })
 
   } catch (error) {
@@ -117,8 +95,23 @@ export async function DELETE(
 
     const contractId = params.id
 
-    // 这里应该从数据库删除合同
-    console.log('删除合同:', contractId)
+    // 验证合同存在
+    const existingContract = await db.findContractById(contractId)
+    if (!existingContract) {
+      return NextResponse.json({ error: "合同未找到" }, { status: 404 })
+    }
+
+    // 验证用户权限
+    if (existingContract.userId !== session.user.id) {
+      return NextResponse.json({ error: "无权删除此合同" }, { status: 403 })
+    }
+
+    // 从数据库删除合同
+    // 注意：实际项目中可能需要软删除或关联删除签名等
+    await db.updateContract(contractId, {
+      status: "CANCELLED",
+      updatedAt: new Date(),
+    })
 
     return NextResponse.json({
       success: true,
